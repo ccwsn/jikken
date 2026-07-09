@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🇮🇳↔🇯🇵 会議時間変換</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f0c29 0%, #1a1042 50%, #0d1b4b 100%);
+    font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 16px;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  .header { text-align: center; margin-bottom: 22px; }
+  .header-sub { font-size: 11px; letter-spacing: 4px; color: #8888bb; margin-bottom: 5px; font-family: 'Space Mono', monospace; }
+  h1 { font-size: 21px; font-weight: 700; color: #fff; }
+  .card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px; padding: 22px 20px;
+    backdrop-filter: blur(20px); margin-bottom: 16px;
+  }
+  .tabs { display: flex; background: rgba(0,0,0,0.3); border-radius: 11px; padding: 4px; margin-bottom: 18px; }
+  .tab {
+    flex: 1; text-align: center; padding: 9px 0; border-radius: 8px; font-size: 13px;
+    cursor: pointer; transition: all 0.18s; user-select: none; color: #8888aa; font-weight: 400;
+    font-family: inherit; border: none; background: transparent;
+  }
+  .tab.active { background: linear-gradient(135deg, #7c6af7, #5a9cf8); color: #fff; font-weight: 700; }
+  .inputs { display: flex; gap: 12px; }
+  .input-group { display: flex; flex-direction: column; }
+  .input-group.wide { flex: 2; }
+  .input-group.narrow { flex: 1; }
+  label { color: #aab; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; display: block; margin-bottom: 7px; }
+  input[type=text] {
+    width: 100%; background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 11px; color: #fff; outline: none;
+    font-family: 'Space Mono', monospace; font-weight: 700; text-align: center;
+  }
+  input[type=text]:focus { border-color: #7c6af7; }
+  #timeInput { padding: 12px 14px; font-size: 28px; letter-spacing: 5px; }
+  #durInput  { padding: 12px 10px; font-size: 22px; }
+  .error { color: #e74c3c; font-size: 11px; margin-top: 5px; }
+  .list-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px; overflow: hidden;
+  }
+  .list-header { padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.07); color: #8888bb; font-size: 11px; letter-spacing: 2px; }
+  .row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+  }
+  .row.fri { border-bottom: 1px solid rgba(255,255,255,0.12); }
+  .row:hover { background: rgba(124,106,247,0.1); }
+  .row.today { background: rgba(124,106,247,0.08); }
+  .row-text { flex: 1; color: #e0e0f0; font-size: 13.5px; line-height: 1.6; }
+  .row-placeholder { flex: 1; color: #3a3a5a; font-size: 13px; }
+  .today-badge {
+    font-size: 9px; background: #7c6af7; color: #fff;
+    border-radius: 4px; padding: 1px 5px; margin-right: 6px;
+    vertical-align: middle; user-select: none;
+  }
+  .copy-btn {
+    flex-shrink: 0;
+    padding: 5px 13px; border-radius: 8px; font-size: 12px; font-weight: 700;
+    border: 1px solid rgba(124,106,247,0.5);
+    background: rgba(124,106,247,0.35); color: #c8c0ff;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+    white-space: nowrap;
+  }
+  .copy-btn:hover { filter: brightness(1.2); transform: scale(1.04); }
+  .copy-btn.done { background: #2ecc71; border-color: #2ecc71; color: #fff; }
+  .copy-btn:disabled { background: rgba(255,255,255,0.04); border-color: transparent; color: #2a2a4a; cursor: default; filter: none; transform: none; }
+  .footer { text-align: center; margin-top: 14px; color: rgba(255,255,255,0.18); font-size: 11px; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="header-sub">TIME ZONE BRIDGE</div>
+    <h1>🇮🇳 ↔ 🇯🇵 会議時間変換</h1>
+  </div>
+
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" id="tabJST" onclick="setMode('JST')">🇯🇵 日本時間を入力</button>
+      <button class="tab" id="tabIST" onclick="setMode('IST')">🇮🇳 インド時間を入力</button>
+    </div>
+    <div class="inputs">
+      <div class="input-group wide">
+        <label>開始時刻（例：2140）</label>
+        <input type="text" id="timeInput" inputmode="numeric" maxlength="4" placeholder="2140" oninput="this.value=this.value.replace(/[^0-9]/g,''); render()">
+        <div class="error" id="timeError" style="display:none">時刻の形式が正しくありません（例：2140）</div>
+      </div>
+      <div class="input-group narrow">
+        <label>所要時間（分）</label>
+        <input type="text" id="durInput" inputmode="numeric" placeholder="60" value="60" oninput="this.value=this.value.replace(/[^0-9]/g,''); render()">
+      </div>
+    </div>
+  </div>
+
+  <div class="list-box">
+    <div class="list-header">📅 今日から2週間（月〜金）</div>
+    <div id="dateList"></div>
+  </div>
+
+  <div class="footer">IST = UTC+5:30　／　JST = UTC+9:00　／　時差 3時間30分</div>
+</div>
+
+<script>
+const WEEKDAYS = ["日","月","火","水","木","金","土"];
+let mode = "JST";
+
+function setMode(m) {
+  mode = m;
+  document.getElementById("tabJST").className = "tab" + (m === "JST" ? " active" : "");
+  document.getElementById("tabIST").className = "tab" + (m === "IST" ? " active" : "");
+  render();
+}
+
+function pad(n) { return String(n).padStart(2,"0"); }
+
+function parseTime(str) {
+  const s = str.replace(/[^0-9]/g,"");
+  if (s.length < 3) return null;
+  const h = parseInt(s.slice(0, s.length-2), 10);
+  const mv = parseInt(s.slice(-2), 10);
+  if (h < 0 || h > 23 || mv < 0 || mv > 59) return null;
+  return { h, m: mv };
+}
+
+function addMin(h, m, delta) {
+  const total = h*60 + m + delta;
+  const w = ((total % 1440) + 1440) % 1440;
+  return { h: Math.floor(w/60), m: w%60 };
+}
+
+function fmt(h, m) { return pad(h)+":"+pad(m); }
+
+function getWeekdays() {
+  const days = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today); d.setDate(today.getDate()+i);
+    if (d.getDay() >= 1 && d.getDay() <= 5) days.push(d);
+  }
+  return days;
+}
+
+function formatLabel(d) {
+  return `${d.getMonth()+1}月${d.getDate()}日(${WEEKDAYS[d.getDay()]})`;
+}
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = "✅ コピー済";
+    btn.classList.add("done");
+    setTimeout(() => { btn.textContent = "コピー"; btn.classList.remove("done"); }, 1800);
+  }).catch(() => {
+    // fallback
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;font-family:'Meiryo UI',Meiryo,sans-serif;color:#000;";
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    btn.textContent = "✅ コピー済";
+    btn.classList.add("done");
+    setTimeout(() => { btn.textContent = "コピー"; btn.classList.remove("done"); }, 1800);
+  });
+}
+
+function render() {
+  const timeVal = document.getElementById("timeInput").value;
+  const durVal  = parseInt(document.getElementById("durInput").value, 10) || 60;
+  const parsed  = parseTime(timeVal);
+  const errEl   = document.getElementById("timeError");
+
+  const hasPartial = timeVal.replace(/[^0-9]/g,"").length >= 3;
+  errEl.style.display = (hasPartial && !parsed) ? "block" : "none";
+
+  let jst = null, ist = null, jstEnd = null, istEnd = null;
+  if (parsed) {
+    const {h, m} = parsed;
+    if (mode === "JST") { jst={h,m}; ist=addMin(h,m,-210); }
+    else                { ist={h,m}; jst=addMin(h,m,210); }
+    jstEnd = addMin(jst.h, jst.m, durVal);
+    istEnd = addMin(ist.h, ist.m, durVal);
+  }
+
+  const weekdays = getWeekdays();
+  const today = new Date();
+  const listEl = document.getElementById("dateList");
+  listEl.innerHTML = "";
+
+  weekdays.forEach((d) => {
+    const isToday = d.getDate()===today.getDate() && d.getMonth()===today.getMonth() && d.getFullYear()===today.getFullYear();
+    const isFri   = d.getDay() === 5;
+
+    const row = document.createElement("div");
+    row.className = "row" + (isToday ? " today" : "") + (isFri ? " fri" : "");
+
+    if (jst) {
+      // plain text for copying — Meiryo UI, black
+      const plainText = `${formatLabel(d)}　日本時間${fmt(jst.h,jst.m)}-${fmt(jstEnd.h,jstEnd.m)} (インド時間${fmt(ist.h,ist.m)}-${fmt(istEnd.h,istEnd.m)})`;
+
+      const textSpan = document.createElement("span");
+      textSpan.className = "row-text";
+      textSpan.textContent = (isToday ? "【今日】" : "") + plainText.replace(/^.+?　/, `${formatLabel(d)}　`);
+      // build clean label without today badge in copy text
+      const copyStr = plainText;
+
+      const btn = document.createElement("button");
+      btn.className = "copy-btn";
+      btn.textContent = "コピー";
+      btn.onclick = () => copyText(copyStr, btn);
+
+      if (isToday) {
+        const badge = document.createElement("span");
+        badge.className = "today-badge";
+        badge.textContent = "今日";
+        row.appendChild(badge);
+        textSpan.textContent = plainText;
+      }
+
+      row.appendChild(textSpan);
+      row.appendChild(btn);
+    } else {
+      const span = document.createElement("span");
+      span.className = "row-placeholder";
+      if (isToday) {
+        const badge = document.createElement("span");
+        badge.className = "today-badge";
+        badge.style.cssText = "background:rgba(124,106,247,0.3);color:#8888bb";
+        badge.textContent = "今日";
+        span.appendChild(badge);
+      }
+      span.appendChild(document.createTextNode(formatLabel(d)));
+      const hint = document.createElement("span");
+      hint.style.cssText = "color:#2a2a4a;margin-left:10px";
+      hint.textContent = "← 時刻を入力してください";
+      span.appendChild(hint);
+
+      const btn = document.createElement("button");
+      btn.className = "copy-btn";
+      btn.textContent = "コピー";
+      btn.disabled = true;
+
+      row.appendChild(span);
+      row.appendChild(btn);
+    }
+
+    listEl.appendChild(row);
+  });
+}
+
+render();
+</script>
+</body>
+</html>
