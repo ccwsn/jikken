@@ -108,7 +108,7 @@
   </div>
 
   <div class="list-box">
-    <div class="list-header">📅 今日から2週間（月〜金）</div>
+    <div class="list-header">📅 今日から１か月</div>
     <div id="dateList"></div>
   </div>
 
@@ -145,13 +145,17 @@ function addMin(h, m, delta) {
 
 function fmt(h, m) { return pad(h)+":"+pad(m); }
 
-function getWeekdays() {
+function getDays() {
   const days = [];
-  const today = new Date(); today.setHours(0,0,0,0);
-  for (let i = 0; i < 14; i++) {
-    const d = new Date(today); d.setDate(today.getDate()+i);
-    if (d.getDay() >= 1 && d.getDay() <= 5) days.push(d);
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  for (let i = 0; i < 31; i++) {   // 今日から31日分
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    days.push(d);
   }
+
   return days;
 }
 
@@ -197,7 +201,7 @@ function render() {
     istEnd = addMin(ist.h, ist.m, durVal);
   }
 
-  const weekdays = getWeekdays();
+  const weekdays = getDays();
   const today = new Date();
   const listEl = document.getElementById("dateList");
   listEl.innerHTML = "";
