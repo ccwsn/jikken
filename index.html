@@ -163,6 +163,12 @@ function formatLabel(d) {
   return `${d.getMonth()+1}月${d.getDate()}日(${WEEKDAYS[d.getDay()]})`;
 }
 
+function getWeekdayColor(day) {
+  if (day === 0) return "#ff6b6b"; // 日曜日（赤）
+  if (day === 6) return "#5aa9ff"; // 土曜日（青）
+  return "#e0e0f0";                // 平日
+}
+ 
 function copyText(text, btn) {
   navigator.clipboard.writeText(text).then(() => {
     btn.textContent = "✅ コピー済";
@@ -218,8 +224,15 @@ function render() {
       const plainText = `${formatLabel(d)}　日本時間${fmt(jst.h,jst.m)}-${fmt(jstEnd.h,jstEnd.m)} (インド時間${fmt(ist.h,ist.m)}-${fmt(istEnd.h,istEnd.m)})`;
 
       const textSpan = document.createElement("span");
-      textSpan.className = "row-text";
-      textSpan.textContent = (isToday ? "【今日】" : "") + plainText.replace(/^.+?　/, `${formatLabel(d)}　`);
+textSpan.className = "row-text";
+
+const label = formatLabel(d);
+const rest = plainText.substring(label.length);
+
+textSpan.innerHTML =
+  (isToday ? "【今日】" : "") +
+  `<span style="color:${getWeekdayColor(d.getDay())};font-weight:700;">${label}</span>${rest}`;
+     
       // build clean label without today badge in copy text
       const copyStr = plainText;
 
